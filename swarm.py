@@ -4,10 +4,11 @@ import random
 import thread
 import math
 
-WIDTH = 400
-LENGTH = 400
-HEIGHT = 50
+
 robot_list = []
+WIDTH = 2000
+LENGTH = 2000
+HEIGHT = 50
 
 color.brown = (0.38,0.26,0.078)
 color.orange = (0.85,0.54,0.18)
@@ -20,15 +21,39 @@ arenawall4 = box(pos=(0,HEIGHT/2,LENGTH/2), size=(WIDTH,HEIGHT,4), color=color.o
 #tower = box(pos=(0,0,-100), size=(5,100,5), color=color.brown, axis=(1,0,0))
 #scene.ambient = 0
 
+class Food(object):
+	def __init__(self):
+		self.x = random.randint(-900,900)
+		self.y = 17
+		self.z = random.randint(-900,900)
+		self.box = box(pos=(self.x,self.y,self.z), size=(30,30,30), color=color.yellow, axis=(1,0,0), material = materials.emissive)
+		self.intensity = 100
+		#self.lamp = local_light(pos=(self.x,self.y,self.z), color=color.red)
+
+	def update(self):
+		pass
+
+
+
 
 class Robot(object):
 	def __init__(self):
-		global robot_list
-		self.x = random.randint(-140,140)
-		self.y = 7
-		self.z = random.randint(-140,140)
-		self.heading = (1,0,0)
-		self.box = box(pos=(self.x,self.y,self.z), size=(30,10,10), color=color.red, axis=self.heading, material = materials.emissive)
+		global food_list
+		self.decider = random.choice([0,1])
+		if self.decider ==0:
+			self.x = random.randint(-900,900)
+			self.y = 7
+			self.z  = random.randint(-900,900)
+			self.box = box(pos=(self.x,self.y,self.z), size=(30,10,10), color=color.blue, axis=(1,0,0), material = materials.emissive)
+
+		else:
+			self.x = random.randint(-900,900)
+			self.y = 7
+			self.z  = random.randint(-900,900)
+			self.box = box(pos=(self.x,self.y,self.z), size=(30,10,10), color=color.red, axis=(1,0,0), material = materials.emissive)
+
+		self.intensity =1 #random.randint(80,120)
+		#self.box = box(pos=(self.x,self.y,self.z), size=(30,10,10), color=color.red, axis=self.heading, material = materials.emissive)
 		self.leftlvl = 0
 		self.rightlvl = 0
 		#self.lamp = local_light(pos=(self.x,self.y,self.z), color=color.red)
@@ -36,25 +61,25 @@ class Robot(object):
 	def forwards(self,number_of_repeats):
 		for x in xrange(number_of_repeats):
 			self.box.pos += self.box.axis/100
-			time.sleep(0.01)
+			#time.sleep(0.01)
 
 	def backwards(self,number_of_repeats):
 		for x in xrange(number_of_repeats):
 			self.box.pos -= self.box.axis/100
 			#self.lamp.pos = self.box.pos
-			time.sleep(0.01)
+			#time.sleep(0.01)
 
 	def anticlockwise(self,number_of_repeats):
 		for y in xrange(number_of_repeats):
-			self.box.rotate(angle=0.1, axis = (0,1,0), origin = self.box.pos)
+			self.box.rotate(angle=0.05, axis = (0,1,0), origin = self.box.pos)
 			rotate(vector=self.box.axis, angle=0.1, axis=(0,1,0))
-			time.sleep(0.1)
+			#time.sleep(0.1)
 
 	def clockwise(self,number_of_repeats):
 		for y in xrange(number_of_repeats):
-			self.box.rotate(angle=-0.1, axis = (0,1,0), origin = self.box.pos)
+			self.box.rotate(angle=-0.05, axis = (0,1,0), origin = self.box.pos)
 			rotate(vector=self.box.axis, angle=0.1, axis=(0,1,0))
-			time.sleep(0.1)	
+			#time.sleep(0.1)	
 
 	def left_sensor(self):
 		#find the corners first
@@ -62,11 +87,11 @@ class Robot(object):
 		self.perp = cross(self.middlevector,(0,1,0))
 		self.midfront = self.box.pos+15*self.middlevector
 		#print midfront
-		self.leftcorner = self.midfront-self.perp*5
-		for r in robot_list:
+		self.leftcorner = self.midfront+self.perp*5
+		for r in food_list:
 			self.distance = mag(-self.leftcorner+r.box.pos)
-			if self.distance > 16:
-				self.leftlvl +=100/math.pi*self.distance**2
+			if self.distance < 600:
+				self.leftlvl +=r.intensity/4*math.pi*self.distance**2
 
 
 
@@ -77,11 +102,11 @@ class Robot(object):
 		self.perp = cross(self.middlevector,(0,1,0))
 		self.midfront = self.box.pos+15*self.middlevector
 		#print midfront
-		self.rightcorner = self.midfront+self.perp*5
-		for r in robot_list:
+		self.rightcorner = self.midfront-self.perp*5
+		for r in food_list:
 			self.distance = mag(-self.rightcorner+r.box.pos)
-			if self.distance > 16:
-				self.rightlvl +=100/math.pi*self.distance**2
+			if self.distance < 600:
+				self.rightlvl +=r.intensity/4*math.pi*self.distance**2
 
 
 
@@ -91,19 +116,27 @@ class Robot(object):
 			self.rightlvl = 0
 			self.left_sensor()
 			self.right_sensor()
+			#print "right = " +str(self.rightlvl)
+			#print "left = " + str(self.leftlvl)
+			#time.sleep(2)
 			if self.leftlvl >=self.rightlvl:
-				self.clockwise(10)
-			else:
 				self.anticlockwise(10)
+			else:
+				self.clockwise(5)
 			self.forwards(30)
+			rate(100)
 
 
 
+food_list = []
+
+for x in xrange(16):
+	food_list.append(Food())
 
 
-robot_list = []
-for x in xrange(50):
+for x in xrange(20):
 	robot_list.append(Robot())
+
 
 
 
