@@ -6,8 +6,8 @@ import math
 
 
 robot_list = []
-WIDTH = 2000
-LENGTH = 2000
+WIDTH = 800
+LENGTH = 800
 HEIGHT = 50
 
 color.brown = (0.38,0.26,0.078)
@@ -23,15 +23,37 @@ arenawall4 = box(pos=(0,HEIGHT/2,LENGTH/2), size=(WIDTH,HEIGHT,4), color=color.o
 
 class Food(object):
 	def __init__(self):
-		self.x = random.randint(-900,900)
+		self.x = random.randint(-WIDTH/2+30,WIDTH/2-30)
 		self.y = 17
-		self.z = random.randint(-900,900)
-		self.box = box(pos=(self.x,self.y,self.z), size=(30,30,30), color=color.yellow, axis=(1,0,0), material = materials.emissive)
-		self.intensity = 100
-		#self.lamp = local_light(pos=(self.x,self.y,self.z), color=color.red)
+		self.z = random.randint(-LENGTH/2+30,LENGTH/2-30)
+		self.box = box(pos=(self.x,self.y,self.z), size=(30,30,30), color=color.green, axis=(1,0,0), material = materials.emissive)
+		self.intensity = 1.00
+		#self.lamp = local_light(pos=(self.x,self.y,self.z), color=color.green)
+		self.time_off = random.randint(5,9)
+		self.time_on = random.randint(5,9)
+		self.state = True
+
 
 	def update(self):
-		pass
+		while True:
+			self.state = True
+			self.intensity = 1.00
+			#self.lamp = local_light(pos=(self.x,self.y,self.z), color=color.green)
+			self.box = box(pos=(self.x,self.y,self.z), size=(30,30,30), color=color.green, axis=(1,0,0), material = materials.emissive)
+			time.sleep(self.time_on)
+			self.state = False
+			self.intensity = 0
+			#self.lamp = 0
+			self.box = box(pos=(self.x,self.y,self.z), size=(30,30,30), color=color.orange, axis=(1,0,0), material = materials.emissive)
+			self.lamp = 0
+			time.sleep(self.time_off)
+			rate(100)
+
+
+
+
+
+
 
 
 
@@ -39,24 +61,17 @@ class Food(object):
 class Robot(object):
 	def __init__(self):
 		global food_list
-		self.decider = random.choice([0,1])
-		if self.decider ==0:
-			self.x = random.randint(-900,900)
-			self.y = 7
-			self.z  = random.randint(-900,900)
-			self.box = box(pos=(self.x,self.y,self.z), size=(30,10,10), color=color.blue, axis=(1,0,0), material = materials.emissive)
-
-		else:
-			self.x = random.randint(-900,900)
-			self.y = 7
-			self.z  = random.randint(-900,900)
-			self.box = box(pos=(self.x,self.y,self.z), size=(30,10,10), color=color.red, axis=(1,0,0), material = materials.emissive)
+		self.x = random.randint(-WIDTH/2+30,WIDTH/2-3)
+		self.y = 7
+		self.z  = random.randint(-LENGTH/2+30,LENGTH/2-30)
+		self.box = box(pos=(self.x,self.y,self.z), size=(30,10,10), color=color.blue, axis=(1,0,0), material = materials.emissive)
 
 		self.intensity =1 #random.randint(80,120)
 		#self.box = box(pos=(self.x,self.y,self.z), size=(30,10,10), color=color.red, axis=self.heading, material = materials.emissive)
 		self.leftlvl = 0
 		self.rightlvl = 0
-		#self.lamp = local_light(pos=(self.x,self.y,self.z), color=color.red)
+		self.turning_speed = random.randint(1,9)
+		self.forwards_speed = random.randint(1,20)
 
 	def forwards(self,number_of_repeats):
 		for x in xrange(number_of_repeats):
@@ -91,7 +106,9 @@ class Robot(object):
 		for r in food_list:
 			self.distance = mag(-self.leftcorner+r.box.pos)
 			if self.distance < 600:
-				self.leftlvl +=r.intensity/4*math.pi*self.distance**2
+				self.leftlvl +=r.intensity/1.33*math.pi*self.distance**3
+			else:
+				self.rightlvl +=0
 
 
 
@@ -106,7 +123,9 @@ class Robot(object):
 		for r in food_list:
 			self.distance = mag(-self.rightcorner+r.box.pos)
 			if self.distance < 600:
-				self.rightlvl +=r.intensity/4*math.pi*self.distance**2
+				self.rightlvl +=r.intensity/1.33*math.pi*self.distance**3
+			else:
+				self.rightlvl += 0
 
 
 
@@ -116,28 +135,29 @@ class Robot(object):
 			self.rightlvl = 0
 			self.left_sensor()
 			self.right_sensor()
-			#print "right = " +str(self.rightlvl)
-			#print "left = " + str(self.leftlvl)
-			#time.sleep(2)
 			if self.leftlvl >=self.rightlvl:
-				self.anticlockwise(10)
-			else:
-				self.clockwise(5)
-			self.forwards(30)
-			rate(100)
+				self.anticlockwise(self.turning_speed)
+			elif self.leftlvl <=self.rightlvl:
+				self.clockwise(self.turning_speed)
+			else: 
+				self.forwards(self.forwards_speed)
+			self.forwards(self.turning_speed)
+			rate(24)
 
 
 
 food_list = []
 
-for x in xrange(16):
+for x in xrange(5):
 	food_list.append(Food())
 
 
-for x in xrange(20):
+for x in xrange(30):
 	robot_list.append(Robot())
 
 
+for f in food_list:
+	thread.start_new_thread(f.update,())
 
 
 for r in robot_list:
