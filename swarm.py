@@ -6,8 +6,8 @@ import math
 
 
 robot_list = []
-WIDTH = 800
-LENGTH = 800
+WIDTH = 1000
+LENGTH = 1000
 HEIGHT = 50
 
 color.brown = (0.38,0.26,0.078)
@@ -70,8 +70,10 @@ class Robot(object):
 		#self.box = box(pos=(self.x,self.y,self.z), size=(30,10,10), color=color.red, axis=self.heading, material = materials.emissive)
 		self.leftlvl = 0
 		self.rightlvl = 0
-		self.turning_speed = random.randint(1,9)
-		self.forwards_speed = random.randint(1,20)
+		self.turning_speed = random.randint(0,15)
+		self.forwards_speed = random.randint(0,40)
+		self.energy = 10000
+		self.range = random.randint(50,800)
 
 	def forwards(self,number_of_repeats):
 		for x in xrange(number_of_repeats):
@@ -105,7 +107,7 @@ class Robot(object):
 		self.leftcorner = self.midfront+self.perp*5
 		for r in food_list:
 			self.distance = mag(-self.leftcorner+r.box.pos)
-			if self.distance < 600:
+			if self.distance < self.range:
 				self.leftlvl +=r.intensity/1.33*math.pi*self.distance**3
 			else:
 				self.rightlvl +=0
@@ -135,24 +137,32 @@ class Robot(object):
 			self.rightlvl = 0
 			self.left_sensor()
 			self.right_sensor()
-			if self.leftlvl >=self.rightlvl:
-				self.anticlockwise(self.turning_speed)
-			elif self.leftlvl <=self.rightlvl:
-				self.clockwise(self.turning_speed)
-			else: 
-				self.forwards(self.forwards_speed)
-			self.forwards(self.turning_speed)
+			if self.energy == self.energy:
+				if self.leftlvl >=self.rightlvl-200:
+					self.anticlockwise(self.turning_speed)
+					self.energy -= self.turning_speed**2
+				elif self.leftlvl <=self.rightlvl+200:
+					self.clockwise(self.turning_speed)
+					self.energy -= self.turning_speed**2
+				else: 
+					self.forwards(self.forwards_speed)
+					self.energy -= self.forwards_speed**2
+				self.forwards(self.turning_speed)
+				self.energy -= self.turning_speed**2
+			else:
+				pass
+
 			rate(24)
 
 
 
 food_list = []
 
-for x in xrange(5):
+for x in xrange(8):
 	food_list.append(Food())
 
 
-for x in xrange(30):
+for x in xrange(75):
 	robot_list.append(Robot())
 
 
