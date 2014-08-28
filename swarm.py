@@ -27,7 +27,7 @@ class Food(object):
 		self.y = 17
 		self.z = random.randint(-LENGTH/2+30,LENGTH/2-30)
 		self.box = box(pos=(self.x,self.y,self.z), size=(30,30,30), color=color.green, axis=(1,0,0), material = materials.emissive)
-		self.intensity = 1.00
+		self.intensity = 100000
 		self.time_off = random.randint(1,9)
 		self.time_on = random.randint(1,9)
 		self.state = True
@@ -62,12 +62,12 @@ class Robot(object):
 		self.z  = random.randint(-LENGTH/2+30,LENGTH/2-30)
 		self.box = box(pos=(self.x,self.y,self.z), size=(30,10,10), color=color.blue, axis=(1,0,0), material = materials.emissive)
 		self.state = "alive"
-		self.intensity =1 #random.randint(80,120)
+		#self.intensity =1 #random.randint(80,120)
 		#self.box = box(pos=(self.x,self.y,self.z), size=(30,10,10), color=color.red, axis=self.heading, material = materials.emissive)
 		self.leftlvl = 0
 		self.rightlvl = 0
-		self.turning_speed = random.randint(0,15)
-		self.forwards_speed = random.randint(0,40)
+		self.turning_speed = random.randint(1,15)
+		self.forwards_speed = random.randint(1,40)
 		self.energy = 100000
 		self.range = 800#random.randint(50,800)
 
@@ -104,9 +104,10 @@ class Robot(object):
 		for r in food_list:
 			self.distance = mag(-self.leftcorner+r.box.pos)
 			if self.distance < self.range:
-				self.leftlvl +=r.intensity/1.33*math.pi*self.distance**3
+				#self.leftlvl +=r.intensity/1.33*math.pi*self.distance**3
+				self.leftlvl += r.intensity/(4*math.pi*(self.distance/100)**2)
 			else:
-				self.rightlvl +=0
+				self.leftlvl +=0
 
 
 
@@ -121,12 +122,13 @@ class Robot(object):
 		for r in food_list:
 			self.distance = mag(-self.rightcorner+r.box.pos)
 			if self.distance < 600:
-				self.rightlvl +=r.intensity/1.33*math.pi*self.distance**3
+				#self.rightlvl +=r.intensity/1.33*math.pi*self.distance**3
+				self.rightlvl += r.intensity/(4*math.pi*(self.distance/100)**2)
 			else:
 				self.rightlvl += 0
 
 
-
+	#fudged it so clockwise and anticlockwise are unintuatively backwards but it seem to work!!
 	def update(self):
 		while True:
 			self.leftlvl = 0
@@ -135,11 +137,11 @@ class Robot(object):
 			self.right_sensor()
 			if self.state == "alive":
 				if self.energy > 0:
-					if self.leftlvl >=self.rightlvl-200:
-						self.anticlockwise(self.turning_speed)
-						self.energy -= self.turning_speed**2
-					elif self.leftlvl <=self.rightlvl+200:
+					if self.leftlvl+0.001 >=self.rightlvl:
 						self.clockwise(self.turning_speed)
+						self.energy -= self.turning_speed**2
+					elif self.leftlvl <=self.rightlvl+0.001:
+						self.anticlockwise(self.turning_speed)
 						self.energy -= self.turning_speed**2
 					else: 
 						self.forwards(self.forwards_speed)
@@ -150,11 +152,12 @@ class Robot(object):
 					self.box.color = color.red
 					self.state = "dead"
 					
-				if (self.leftlvl +self.rightlvl)*0.5 > 1600000:
-					self.energy += (self.turning_speed**2)
+				if (self.leftlvl +self.rightlvl)*0.5 > 0.09:
+					self.energy += 3*(self.turning_speed**2)
 			else:
 				pass
-
+			#print "left: "+str(self.leftlvl)
+			#print "right: "+str(self.rightlvl)
 
 			rate(24)
 
